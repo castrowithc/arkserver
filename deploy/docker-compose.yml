@@ -109,3 +109,32 @@ services:
       start_period: 1800s
     networks:
       - default
+
+  # Optional management panel (arkserver-panel), OFF by default. Start with:
+  #   docker compose --profile panel up -d
+  # Requires PANEL_USER/PANEL_PASS in .env. LAN-only: published on 127.0.0.1 by default —
+  # change the host IP to your LAN address to reach it from other devices, or front it with a
+  # reverse proxy. Remote access via VPN, never by exposing this port to the internet.
+  panel:
+    profiles: ["panel"]
+    container_name: ${COMPOSE_PROJECT_NAME:-ark}_panel
+    restart: unless-stopped
+    image: ghcr.io/castrowithc/arkserver-panel:latest
+    # Build locally from the sibling repo instead (dev layout):
+    #build: ../../arkserver-panel
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - PANEL_ADDR=0.0.0.0:8080
+      - PANEL_USER=${PANEL_USER:-}
+      - PANEL_PASS=${PANEL_PASS:-}
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      # Same server volume: the panel reads/writes the INIs (exact paths wired in a later phase).
+      - ${ARK_SERVER_VOLUME:-ark-data}:/data
+    networks:
+      - default
