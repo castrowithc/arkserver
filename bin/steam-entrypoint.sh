@@ -288,6 +288,11 @@ fi
 if [[ "${DISABLE_BATTLEYE}" == "true" ]]; then
   args=('--arkopt,-NoBattlEye' "${args[@]}")
 fi
+# Game log is OFF by default: without -servergamelog ShooterGame.log stays 0 B. Opt in
+# with ENABLE_GAME_LOG=true; the log is then pruned count-based via cron (ark-prune-logs.sh).
+if [[ "${ENABLE_GAME_LOG}" == "true" ]]; then
+  args=('--arkopt,-servergamelog' "${args[@]}")
+fi
 BETA_ARGS=(${BETA:+--beta=${BETA}} ${BETA_ACCESSCODE:+--betapassword=${BETA_ACCESSCODE}})
 
 echo "_______________________________________"

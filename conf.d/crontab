@@ -8,3 +8,7 @@
 
 # Backup the world every 6 hours (rolling retention is handled by arkMaxBackupSizeMB).
 0 */6 * * * arkmanager backup >> ${ARK_SERVER_VOLUME}/log/crontab.log 2>&1
+
+# Prune the game log hourly, keeping the newest 20 (only relevant with ENABLE_GAME_LOG=true;
+# a no-op when logging is off). Count-based, mirrors the backup retention.
+0 * * * * bash /ark-prune-logs.sh "${ARK_SERVER_VOLUME}/server/ShooterGame/Saved/Logs" 20 >> ${ARK_SERVER_VOLUME}/log/crontab.log 2>&1

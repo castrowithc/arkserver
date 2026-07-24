@@ -17,10 +17,18 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME:-ark}_server
     # Keep the server up across reboots/crashes, but not after an explicit `stop`.
     restart: unless-stopped
+    # Cap the container log (Docker's json-file default is unbounded, so a chatty server
+    # can fill the disk over time). This is the daemon-captured stdout/stderr; the in-game
+    # log is a separate file, gated by ENABLE_GAME_LOG.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     # Published, CI-built + Trivy-scanned image from GHCR (recommended). Pin a fixed version
     # for production — easy rollback; :latest = newest release, :edge = tip of main. The
     # package is public, so no docker login is needed.
-    image: ghcr.io/theazzy/arkserver:0.1.0
+    image: ghcr.io/castrowithc/arkserver:0.1.0
     # To build the hardened image locally from source instead (context = repo root, one level
     # up), comment out `image:` above and uncomment the block below:
     #build:
@@ -53,6 +61,9 @@ services:
       # DISABLE_BATTLEYE=true to launch with -NoBattlEye. ENABLE_CROSSPLAY=true adds -crossplay.
       - DISABLE_BATTLEYE=${DISABLE_BATTLEYE:-}
       - ENABLE_CROSSPLAY=${ENABLE_CROSSPLAY:-}
+      # Game log (chat/player events -> Saved/Logs/ShooterGame*.log) is OFF by default;
+      # set true to launch with -servergamelog. The log is pruned count-based via cron.
+      - ENABLE_GAME_LOG=${ENABLE_GAME_LOG:-}
       # File ownership on the bind/volume + inherited umask (Phase 3/4).
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}

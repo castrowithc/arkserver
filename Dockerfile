@@ -3,7 +3,7 @@
 # Refresh: docker buildx imagetools inspect cm2network/steamcmd:root
 FROM        cm2network/steamcmd:root@sha256:e6b6b3503bf0e41feafe12dc709c90151afba193e1292cac55d28a7d470b1493
 
-LABEL       org.opencontainers.image.source="https://github.com/Theazzy/arkserver"
+LABEL       org.opencontainers.image.source="https://github.com/castrowithc/arkserver"
 
 ARG         ARK_TOOLS_VERSION="8ddf0b83dc82243d8fc9ecf9bf4bac62c6911c73"
 ARG         IMAGE_VERSION="dev"
