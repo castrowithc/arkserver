@@ -117,6 +117,21 @@ function copy_missing_file() {
   fi
 }
 
+# add_prune_logs_cron — the crontab is copied to the volume once and then belongs to the
+# operator (copy_missing_file never overwrites), so a job added by a newer image would never
+# reach an existing install: it would keep the ENABLE_GAME_LOG switch but lose its retention.
+# Add the job idempotently, taken from the template so the schedule isn't duplicated here and
+# keyed on the script name so an operator's own schedule stays untouched.
+function add_prune_logs_cron() {
+  local live="${ARK_SERVER_VOLUME}/crontab"
+  grep -q 'ark-prune-logs.sh' "${live}" 2>/dev/null && return 0
+  echo "Adding the log-prune cron job to ${live}..."
+  # An edited crontab may have lost its trailing newline; appending then glues both jobs
+  # into one broken line.
+  [[ -z "$(tail -c1 "${live}")" ]] || echo >> "${live}"
+  grep 'ark-prune-logs.sh' "${TEMPLATE_DIRECTORY}/crontab" >> "${live}"
+}
+
 function needs_install() {
   local SERVER_DIR="${ARK_SERVER_VOLUME}/server"
   if [ ! -d "${SERVER_DIR}" ]; then
@@ -326,6 +341,7 @@ create_missing_dir "${ARK_SERVER_VOLUME}/log" "${ARK_SERVER_VOLUME}/backup" "${A
 copy_missing_file "${TEMPLATE_DIRECTORY}/arkmanager.cfg" "${ARK_TOOLS_DIR}/arkmanager.cfg"
 copy_missing_file "${TEMPLATE_DIRECTORY}/arkmanager-user.cfg" "${ARK_TOOLS_DIR}/instances/main.cfg"
 copy_missing_file "${TEMPLATE_DIRECTORY}/crontab" "${ARK_SERVER_VOLUME}/crontab"
+add_prune_logs_cron
 
 # Cluster wiring (gated): inject cluster settings into the live cfg and (re)generate
 # sub-instance configs. Both are no-ops unless CLUSTER_ID / SUB_INSTANCE_KEYS are set.
