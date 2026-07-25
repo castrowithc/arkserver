@@ -98,6 +98,32 @@ jobs:
           ignore-unfixed: true
           exit-code: '1'
 
+      # 2b) Rauchtest — das Image muss startfaehig sein, nicht nur bauen und scannen. Faengt
+      #     Fehler, die Build und Scan beide gruen passieren lassen: fehlendes Exec-Bit (0.1.0
+      #     war so nicht startbar), kaputter Shebang, fehlgeschlagener gosu-Drop.
+      - name: Smoke test (image starts)
+        run: |
+          IMG='${{ env.SCAN_TAG }}'
+          # a) Jedes mitgelieferte Skript ist ausfuehrbar.
+          docker run --rm --entrypoint sh "$IMG" -c '
+            for f in /*.sh; do
+              [ -x "$f" ] || { echo "nicht ausfuehrbar: $f"; exit 1; }
+            done
+            echo "Skript-Modi OK"'
+          # b) Der Entrypoint laeuft wirklich an. Ohne bespieltes Volume begaenne danach der
+          #    ~23-GB-Download, deshalb nur bis zum Startbanner warten und dann abbrechen.
+          docker run -d --name smoke -e ARK_SERVER_VOLUME=/smoke "$IMG" >/dev/null
+          for _ in $(seq 1 30); do
+            if docker logs smoke 2>&1 | grep -q "RUNNING AS USER 'steam'"; then
+              found=1; break
+            fi
+            if [ "$(docker inspect -f '{{.State.Running}}' smoke)" != true ]; then break; fi
+            sleep 2
+          done
+          docker logs smoke 2>&1 | head -20
+          docker rm -f smoke >/dev/null
+          [ "${found:-}" = 1 ] || { echo "Entrypoint ist nicht angelaufen"; exit 1; }
+
       # 3) Nur bei Push-Event (main-Branch oder Version-Tag), nach gruenem Gate: nach GHCR pushen.
       #    Cache-Hit -> praktisch nur Push, kein Rebuild. PRs pushen nicht.
       - name: Log in to GHCR
