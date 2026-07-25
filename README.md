@@ -18,7 +18,7 @@ Netzwerk/Port-Forwarding: `../arkserver-ops/docs/networking.md`.
 Statt lokal zu bauen, kann das vorgebaute Image gezogen werden:
 ```bash
 docker pull ghcr.io/castrowithc/arkserver:latest    # neuestes Release
-docker pull ghcr.io/castrowithc/arkserver:0.1.0     # feste Version (empfohlen für Produktion)
+docker pull ghcr.io/castrowithc/arkserver:0.1.1     # feste Version (empfohlen für Produktion)
 docker pull ghcr.io/castrowithc/arkserver:edge      # Spitze von main (Vorschau)
 ```
 Das Image wird per CI gebaut, mit Trivy gescannt und nach GHCR gepusht.
