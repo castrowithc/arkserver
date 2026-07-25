@@ -11,8 +11,8 @@ docker compose up -d       # zieht das Image von GHCR und startet (bzw. baut lok
 docker compose logs -f ark # Fortschritt verfolgen (Erstdownload via SteamCMD dauert)
 ```
 Voraussetzungen: Docker + Compose, **≥12 GB RAM** (`MEM_LIMIT`), ~40 GB freier SSD-Speicher
-für die ARK-SE-Vollinstallation (Details: `../arkserver-ops/docs/hardware-requirements.md`).
-Netzwerk/Port-Forwarding: `../arkserver-ops/docs/networking.md`.
+für die ARK-SE-Vollinstallation (Details: `../arkserver-ops/server/docs/hardware-requirements.md`).
+Netzwerk/Port-Forwarding: `../arkserver-ops/server/docs/networking.md`.
 
 ## Container-Image (GHCR)
 Statt lokal zu bauen, kann das vorgebaute Image gezogen werden:
@@ -30,7 +30,7 @@ Image-Tags `X.Y.Z` / `X.Y` / `latest` sowie ein GitHub-Release aus. `edge` folgt
 
 ## Dokumentation
 Einrichtung, Netzwerk/Port-Forwarding, Karten, Backup/Restore und Fehlerbehebung sind im
-Steuer-Repo dokumentiert: **`../arkserver-ops/docs/`** (Übersicht: `../arkserver-ops/project.md`).
+Steuer-Repo dokumentiert: **`../arkserver-ops/server/docs/`** (Übersicht: `../arkserver-ops/server/project.md`).
 
 ## Lizenz
 [MIT](./LICENSE) © 2026 Christian Castro.

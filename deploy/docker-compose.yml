@@ -41,7 +41,7 @@ services:
     # Cap RAM (#85). ARK SE thrashes/livelocks below ~10 GB even on TheIsland (first
     # runtime test: 8g pinned the cgroup at the ceiling and the world never finished
     # loading). 12g is a safe floor for a small map; raise for big maps/many mods.
-    # See ../arkserver-ops/docs/hardware-requirements.md.
+    # See ../arkserver-ops/server/docs/hardware-requirements.md.
     mem_limit: ${MEM_LIMIT:-12g}
     environment:
       # # This setup is necessary if you have to download a non-anonymous appID/modID
@@ -72,7 +72,7 @@ services:
       # Set CLUSTER_ID to enable cross-server transfers (shared /cluster dir). Leave empty
       # for a plain vanilla server. SUB_INSTANCE_KEYS runs extra maps in THIS container;
       # each sub gets ports offset from the main instance (game +2, query +1, rcon +1 per
-      # sub) — open the matching ranges below and see ../arkserver-ops/docs/mods-and-cluster.md.
+      # sub) — open the matching ranges below and see ../arkserver-ops/server/docs/mods-and-cluster.md.
       - CLUSTER_ID=${CLUSTER_ID:-}
       - SUB_INSTANCE_KEYS=${SUB_INSTANCE_KEYS:-}
       #- SUB_Fjordur_SERVER_MAP=Fjordur
