@@ -131,10 +131,61 @@ services:
       - PANEL_ADDR=0.0.0.0:8080
       - PANEL_USER=${PANEL_USER:-}
       - PANEL_PASS=${PANEL_PASS:-}
+      # RCON into the game server, for the player list and the restart action. Reuses the server's
+      # own ADMIN_PASSWORD, so there is no second credential to keep in sync. The host is the
+      # compose service alias, which survives a change of COMPOSE_PROJECT_NAME; the container name
+      # would not. Without a password the panel still starts and reports these features as
+      # unavailable.
+      - ARK_RCON_ADDR=ark:27020
+      - ARK_ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      # Where the volume below is mounted, so the panel can read the installed Steam build id.
+      - ARK_DATA_DIR=/data
+      # Docker access for the CPU/RAM figures and for start/stop, always through the proxy below.
+      # ARK_CONTAINER is the container's name as the Docker API knows it, which is not the service
+      # alias RCON connects to. Empty ARK_DOCKER_HOST would simply hide those features.
+      - ARK_DOCKER_HOST=http://socket-proxy:2375
+      - ARK_CONTAINER=${COMPOSE_PROJECT_NAME:-ark}_server
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
       # Same server volume: the panel reads/writes the INIs (exact paths wired in a later phase).
       - ${ARK_SERVER_VOLUME:-ark-data}:/data
+    networks:
+      - default
+
+  # Docker access for the panel, narrowed to a fixed set of paths on the ARK container. Same profile
+  # as the panel, so neither runs in normal operation. The panel speaks plain HTTP to this proxy and
+  # never gets the socket: socket access is always full access, and the panel is the part with a web
+  # UI and therefore the attack surface. Not published on any port, so only the compose network can
+  # reach it.
+  socket-proxy:
+    profiles: ["panel"]
+    container_name: ${COMPOSE_PROJECT_NAME:-ark}_socket_proxy
+    restart: unless-stopped
+    # Pinned by digest (index digest, so every architecture still resolves).
+    image: wollomatic/socket-proxy:1.12.3@sha256:74e770f5ed3cfc9ecb6350e177d2aa55873568c85bc953079834e68607dbf71b
+    # Reading the Docker socket needs root, and as a non-root user the proxy exits at startup. This
+    # is exactly why it is its own minimal container: the privilege sits here, in a from-scratch
+    # image with no shell, instead of in the panel.
+    user: "0:0"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # The allowlist is the real gate: exactly the paths the panel calls, bound to this deployment's
+    # ARK container. Everything else, other containers, images, networks, exec, and even kill on the
+    # ARK container itself, comes back 403. Each regex is anchored by the proxy.
+    command:
+      - "-loglevel=info"
+      - "-listenip=0.0.0.0"
+      - "-allowfrom=panel"
+      - "-allowGET=/containers/${COMPOSE_PROJECT_NAME:-ark}_server/(json|stats)"
+      - "-allowPOST=/containers/${COMPOSE_PROJECT_NAME:-ark}_server/(start|stop)"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - default
