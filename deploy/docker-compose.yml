@@ -122,7 +122,7 @@ services:
     # Same delivery as the server above: CI-built, Trivy-scanned, published to GHCR, and pinned to a
     # fixed version so a recreate never changes what runs (:latest = newest release, :edge = tip of
     # main). The package is public, so no docker login is needed.
-    image: ghcr.io/castrowithc/arkserver-panel:0.1.0
+    image: ghcr.io/castrowithc/arkserver-panel:0.1.1
     # Run as the server's own user. The config files on the volume are mode 600 and owned by it, so
     # with any other uid the panel could not even read them, let alone save an edit.
     user: "${PUID:-1000}:${PGID:-1000}"
