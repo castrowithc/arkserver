@@ -68,7 +68,9 @@ RUN         set -x && \
             apt-get -qq autoclean && apt-get -qq autoremove && apt-get -qq clean && \
             rm -rf /tmp/* /var/cache/*
 
-COPY        bin/    /
+# --chmod, weil das Exec-Bit nicht im Git-Index steht (die Skripte sind dort 100644):
+# ein Linux-Checkout wuerde sie sonst als 644 kopieren und der Container startet nicht.
+COPY --chmod=0755 bin/    /
 COPY        conf.d  ${TEMPLATE_DIRECTORY}
 
 # Relocate the SteamCMD ANSI-strip wrapper next to the real steamcmd.sh inside
