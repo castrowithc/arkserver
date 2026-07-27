@@ -154,6 +154,11 @@ services:
       # panel can work out the local answers itself but not this one, and it must not ask an outside
       # party for it: it is bound to the local network on purpose. Empty leaves that line open.
       - ARK_PUBLIC_HOST=${ARK_PUBLIC_HOST:-}
+      # Where the writable copy of the .env is mounted, which is what switches the form on the
+      # Deployment page from read-only to editable. Comment this and the mount below out to keep the
+      # file read-only. Applying a change still needs `up -d` on the host: the panel writes the file
+      # and says so, it cannot recreate the container and must not be able to.
+      - ARK_ENV_WRITE=/deploy-write/.env
       # Docker access for the CPU/RAM figures and for start/stop, always through the proxy below.
       # ARK_CONTAINER is the container's name as the Docker API knows it, which is not the service
       # alias RCON connects to. Empty ARK_DOCKER_HOST would simply hide those features.
@@ -169,6 +174,12 @@ services:
       # the file on the host with anything that replaces it on save would leave the panel showing
       # the old content indefinitely.
       - ./:/deploy:ro
+      # The .env a second time, alone and writable, so the panel can edit those values. Deliberately
+      # not the directory above: writable, that would include this compose file, and whoever can write
+      # it decides everything about the next `up -d`, up to mounting the host's root into a container.
+      # A single file it is, so the panel writes in place instead of renaming, because a rename would
+      # only swap the mount point inside the container. Remove this line to keep the file read-only.
+      - ./.env:/deploy-write/.env
     networks:
       - default
 
