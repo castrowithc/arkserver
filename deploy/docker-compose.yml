@@ -28,7 +28,7 @@ services:
     # Published, CI-built + Trivy-scanned image from GHCR (recommended). Pin a fixed version
     # for production — easy rollback; :latest = newest release, :edge = tip of main. The
     # package is public, so no docker login is needed.
-    image: ghcr.io/castrowithc/arkserver:0.1.2
+    image: ghcr.io/castrowithc/arkserver:0.1.3
     # To build the hardened image locally from source instead (context = repo root, one level
     # up), comment out `image:` above and uncomment the block below:
     #build:
