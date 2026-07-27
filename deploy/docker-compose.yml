@@ -28,7 +28,7 @@ services:
     # Published, CI-built + Trivy-scanned image from GHCR (recommended). Pin a fixed version
     # for production — easy rollback; :latest = newest release, :edge = tip of main. The
     # package is public, so no docker login is needed.
-    image: ghcr.io/castrowithc/arkserver:0.1.1
+    image: ghcr.io/castrowithc/arkserver:0.1.2
     # To build the hardened image locally from source instead (context = repo root, one level
     # up), comment out `image:` above and uncomment the block below:
     #build:
@@ -124,7 +124,7 @@ services:
     # main). The package is public, so no docker login is needed. The pin sits in the .env because
     # the panel releases far more often than the server: a panel update is then an edit right where
     # `docker compose up -d` runs, instead of a change to this repository.
-    image: ghcr.io/castrowithc/arkserver-panel:${PANEL_VERSION:-0.9.0}
+    image: ghcr.io/castrowithc/arkserver-panel:${PANEL_VERSION:-0.13.0}
     # Run as the server's own user. The config files on the volume are mode 600 and owned by it, so
     # with any other uid the panel could not even read them, let alone save an edit.
     user: "${PUID:-1000}:${PGID:-1000}"
