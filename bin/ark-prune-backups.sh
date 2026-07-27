@@ -31,11 +31,19 @@ mapfile -t files < <(
 count=${#files[@]}
 if (( count > KEEP )); then
   for (( i = KEEP; i < count; i++ )); do
-    if rm -f "${files[$i]}"; then
+    # The .savegame sidecar written by ark-tag-backup.sh goes with its archive. It is not matched
+    # by the find above, so it never counts towards KEEP and never displaces a real backup.
+    if rm -f "${files[$i]}" "${files[$i]}.savegame"; then
       echo "ark-prune-backups: removed old backup ${files[$i]}"
     fi
   done
 fi
+
+# Drop sidecars whose archive is gone, so a backup deleted by hand or by the size-based retention
+# inside arkmanager does not leave a stamp claiming a save game for nothing.
+while IFS= read -r stamp; do
+  [[ -f "${stamp%.savegame}" ]] || rm -f "${stamp}"
+done < <(find "${DIR}" -type f -name '*.savegame' 2>/dev/null)
 
 # Tidy up day-stamp directories that are now empty.
 find "${DIR}" -mindepth 1 -type d -empty -delete 2>/dev/null || true
