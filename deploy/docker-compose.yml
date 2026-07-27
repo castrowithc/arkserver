@@ -154,6 +154,10 @@ services:
       # panel can work out the local answers itself but not this one, and it must not ask an outside
       # party for it: it is bound to the local network on purpose. Empty leaves that line open.
       - ARK_PUBLIC_HOST=${ARK_PUBLIC_HOST:-}
+      # This machine's address inside the local network, for the same connect line. Normally the panel
+      # takes it from the address the browser used, but it is published on the loopback only and is
+      # therefore usually opened as localhost, which says nothing about the network.
+      - ARK_LAN_HOST=${ARK_LAN_HOST:-}
       # Where the writable copy of the .env is mounted, which is what switches the form on the
       # Deployment page from read-only to editable. Comment this and the mount below out to keep the
       # file read-only. Applying a change still needs `up -d` on the host: the panel writes the file
