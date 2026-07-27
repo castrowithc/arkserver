@@ -112,8 +112,8 @@ services:
 
   # Optional management panel (arkserver-panel), OFF by default. Start with:
   #   docker compose --profile panel up -d
-  # Requires PANEL_USER/PANEL_PASS in .env. LAN-only: published on 127.0.0.1 by default —
-  # change the host IP to your LAN address to reach it from other devices, or front it with a
+  # Requires PANEL_USER/PANEL_PASS in .env. LAN-only: published on 127.0.0.1 by default, so set
+  # PANEL_BIND to this machine's LAN address to reach it from other devices, or front it with a
   # reverse proxy. Remote access via VPN, never by exposing this port to the internet.
   panel:
     profiles: ["panel"]
@@ -154,13 +154,29 @@ services:
       # panel can work out the local answers itself but not this one, and it must not ask an outside
       # party for it: it is bound to the local network on purpose. Empty leaves that line open.
       - ARK_PUBLIC_HOST=${ARK_PUBLIC_HOST:-}
+      # This machine's address inside the local network, for the same connect line. Normally the panel
+      # takes it from the address the browser used, but it is published on the loopback only and is
+      # therefore usually opened as localhost, which says nothing about the network.
+      - ARK_LAN_HOST=${ARK_LAN_HOST:-}
+      # Where the writable copy of the .env is mounted, which is what switches the form on the
+      # Deployment page from read-only to editable. Comment this and the mount below out to keep the
+      # file read-only. Applying a change still needs `up -d` on the host: the panel writes the file
+      # and says so, it cannot recreate the container and must not be able to.
+      - ARK_ENV_WRITE=/deploy-write/.env
       # Docker access for the CPU/RAM figures and for start/stop, always through the proxy below.
       # ARK_CONTAINER is the container's name as the Docker API knows it, which is not the service
       # alias RCON connects to. Empty ARK_DOCKER_HOST would simply hide those features.
       - ARK_DOCKER_HOST=http://socket-proxy:2375
       - ARK_CONTAINER=${COMPOSE_PROJECT_NAME:-ark}_server
     ports:
-      - "127.0.0.1:8080:8080"
+      # The variable is the host address only, never the container port: the panel listens on 8080
+      # inside and the rest of the deployment addresses it by service alias. Default is the
+      # loopback, so a fresh checkout is reachable from this machine alone. Two ways to open it up,
+      # and the choice is the host's: a LAN address reaches that one network and nothing else, but
+      # it drops localhost and breaks whenever DHCP hands out a different address; 0.0.0.0 keeps
+      # localhost and survives that, at the price of every interface the host has, which is the
+      # wrong trade on a machine with a public or VPN interface.
+      - "${PANEL_BIND:-127.0.0.1}:8080:8080"
     volumes:
       # Same server volume: the panel reads and writes the INIs here.
       - ${ARK_SERVER_VOLUME:-ark-data}:/data
@@ -169,6 +185,12 @@ services:
       # the file on the host with anything that replaces it on save would leave the panel showing
       # the old content indefinitely.
       - ./:/deploy:ro
+      # The .env a second time, alone and writable, so the panel can edit those values. Deliberately
+      # not the directory above: writable, that would include this compose file, and whoever can write
+      # it decides everything about the next `up -d`, up to mounting the host's root into a container.
+      # A single file it is, so the panel writes in place instead of renaming, because a rename would
+      # only swap the mount point inside the container. Remove this line to keep the file read-only.
+      - ./.env:/deploy-write/.env
     networks:
       - default
 
