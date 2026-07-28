@@ -132,6 +132,40 @@ function add_prune_logs_cron() {
   grep 'ark-prune-logs.sh' "${TEMPLATE_DIRECTORY}/crontab" >> "${live}"
 }
 
+# add_backup_stamp — arkmanager.cfg is copied to the volume once and then belongs to the operator
+# (copy_missing_file never overwrites), so the post-backup step added by a newer image would never
+# reach an existing install: the image would carry the stamp script and nothing would ever call it,
+# leaving every new archive as anonymous as the old ones. Same trap as the log-prune cron.
+#
+# The call goes in FRONT of whatever the command already runs, for two reasons: an operator's own
+# post command keeps working, and the stamp exists before the retention step can weigh an archive
+# against its neighbours.
+function add_backup_stamp() {
+  local live="${ARK_TOOLS_DIR}/arkmanager.cfg"
+  [[ -f "${live}" ]] || return 0
+  grep -q 'ark-tag-backup.sh' "${live}" 2>/dev/null && return 0
+
+  if grep -qE "^[[:space:]]*arkBackupPostCommand='" "${live}"; then
+    echo "Adding the backup stamp step to ${live}..."
+    # Insert right after the opening quote of the first active assignment, so the existing command
+    # simply runs second. & is the whole match, which is the key up to and including that quote.
+    # The inserted "${backupfile}" is safe inside single quotes: arkmanager evaluates the value
+    # later, when the variable exists.
+    sed -i "0,/^[[:space:]]*arkBackupPostCommand='/s//&bash \/ark-tag-backup.sh \"\${backupfile}\"; /" "${live}"
+  elif grep -qE "^[[:space:]]*arkBackupPostCommand=" "${live}"; then
+    # Any other quoting is not this image's default and cannot be edited blindly: inserting a
+    # double quote into a double-quoted value ends it early and silently rewrites what runs after
+    # every backup. Left untouched, with a word about it, because a mangled post command is a worse
+    # outcome than an unstamped backup.
+    echo "arkBackupPostCommand in ${live} is not in the expected form and was left alone." >&2
+    echo "Add 'bash /ark-tag-backup.sh \"\${backupfile}\";' in front of it to stamp backups with their save game." >&2
+  else
+    echo "Adding the backup stamp step to ${live}..."
+    # No active assignment to extend, so take the template's line as it stands.
+    grep "^arkBackupPostCommand=" "${TEMPLATE_DIRECTORY}/arkmanager.cfg" >> "${live}"
+  fi
+}
+
 function needs_install() {
   local SERVER_DIR="${ARK_SERVER_VOLUME}/server"
   if [ ! -d "${SERVER_DIR}" ]; then
@@ -342,6 +376,7 @@ copy_missing_file "${TEMPLATE_DIRECTORY}/arkmanager.cfg" "${ARK_TOOLS_DIR}/arkma
 copy_missing_file "${TEMPLATE_DIRECTORY}/arkmanager-user.cfg" "${ARK_TOOLS_DIR}/instances/main.cfg"
 copy_missing_file "${TEMPLATE_DIRECTORY}/crontab" "${ARK_SERVER_VOLUME}/crontab"
 add_prune_logs_cron
+add_backup_stamp
 
 # Cluster wiring (gated): inject cluster settings into the live cfg and (re)generate
 # sub-instance configs. Both are no-ops unless CLUSTER_ID / SUB_INSTANCE_KEYS are set.
