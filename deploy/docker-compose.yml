@@ -124,7 +124,7 @@ services:
     # main). The package is public, so no docker login is needed. The pin sits in the .env because
     # the panel releases far more often than the server: a panel update is then an edit right where
     # `docker compose up -d` runs, instead of a change to this repository.
-    image: ghcr.io/castrowithc/arkserver-panel:${PANEL_VERSION:-0.13.0}
+    image: ghcr.io/castrowithc/arkserver-panel:${PANEL_VERSION:-0.14.0}
     # Run as the server's own user. The config files on the volume are mode 600 and owned by it, so
     # with any other uid the panel could not even read them, let alone save an edit.
     user: "${PUID:-1000}:${PGID:-1000}"
